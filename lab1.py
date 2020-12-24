@@ -1,6 +1,7 @@
 import requests
 from sqlalchemy import create_engine, Table, Column, String, Float, MetaData
 from sqlalchemy.sql import select
+from Database import Database as DB
 
 
 class WeatherProvider:
@@ -30,24 +31,15 @@ class WeatherProvider:
             for row in data['locations'][location]['values']
         ]
 
+db = DB('sqlite:///weather.sqlite3')
+db.AddTable("weather", date=str, mint=float, maxt=float, location=str, humidity=float)
+db.Create()
 
-engine = create_engine('sqlite:///weather.sqlite3')
-metadata = MetaData()
-weather = Table(
-    'weather',
-    metadata,
-    Column('date', String),
-    Column('mint', Float),
-    Column('maxt', Float),
-    Column('location', String),
-    Column('humidity', Float),
-)
-metadata.create_all(engine)
+provider = WeatherProvider('61GBF341EILPIA5A42W7VM2WK')
+data = provider.get_data('Volgograd,Russia', '2020-09-20', '2020-09-29')
 
-c = engine.connect()
+db.Insert("weather", data)
+selectResult = db.Select("weather")
 
-provider = WeatherProvider('I3D60I88UB6KPSDAVGK38HNP5')
-c.execute(weather.insert(), provider.get_data('Volgograd,Russia', '2020-09-20', '2020-09-29'))
-
-for row in c.execute(select([weather])):
+for row in selectResult:
     print(row)

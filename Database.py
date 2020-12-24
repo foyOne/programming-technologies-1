@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine, Table, Column, String, Float, MetaData
 from sqlalchemy.sql import select
-# from sqlalchemy.pool import SingletonThreadPool
 
 def Convert2SqlType(colType):
     py2sql = {float: Float, str: String}
@@ -15,13 +14,13 @@ class Database:
         self.Base = self.Engien.connect()
 
     
-    def CreateDatabase(self):
+    def Create(self):
         self.MetaData.create_all(self.Engien)
         self.Base = self.Engien.connect()
 
     def AddTable(self, Name, **colDict):
         Table(Name, self.MetaData)
-        for colName, colType in colDict:
+        for colName, colType in colDict.items():
             self.MetaData.tables[Name].append_column(Column(colName, Convert2SqlType(colType)))
 
     # Методы
@@ -34,3 +33,14 @@ class Database:
             return None
         else:
             return QueryResult
+    
+    def Insert(self, TableName, Data):
+        if Data == None:
+            return False
+        
+        try:
+            self.Base.execute(self.MetaData.tables[TableName].insert(), Data)
+        except:
+            return False
+        else:
+            return True
